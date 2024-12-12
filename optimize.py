@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def aloha_simulation(num_users, A, p, num_slots):
+def aloha_simulation(num_users, A, pf, pr, num_slots):
     # Khởi tạo các mảng trạng thái
     O = np.zeros(num_users)  # Trạng thái gửi thành công
     D = np.zeros(num_users)  # Trạng thái bộ đệm (1 = thành công, 0 = thất bại)
@@ -11,6 +11,9 @@ def aloha_simulation(num_users, A, p, num_slots):
     collisions = 0
 
     for slot in range(num_slots):
+        # Xác suất gửi dựa trên trạng thái D
+        p = np.where(D==1, pf, pr)
+
         # Cập nhật ý định gửi gói tin
         Q = (np.random.rand(num_users) < p).astype(int)  # Random theo xác suất p
 
@@ -77,31 +80,42 @@ def aloha_simulation(num_users, A, p, num_slots):
 # # In kết quả
 # print(f"Throughput (Hiệu suất thành công): {efficiency:.4f}")
 # print(f"Collision rate (Tỷ lệ va chạm): {collision_rate:.4f}")
-def collect_efficiency(num_users, A, num_slots, num_timers):
+def collect_efficiency(num_users, A, pf, num_slots, num_timers):
     efficiencies = []  # Mảng lưu kết quả hiệu suất
-    p_values = np.linspace(0.05, 1, num_timers)  # Chia giá trị p từ 0 đến 1
+    pr_values = np.linspace(0.001, 1, num_timers)  # Chia giá trị p từ 0 đến 1
 
-    for p in p_values:
-        throughput, collision_rate, Q, senders = aloha_simulation(num_users, A, p, num_slots)
+    for pr in pr_values:
+        throughput, collision_rate, Q, senders = aloha_simulation(num_users, A, pf, pr, num_slots)
         efficiencies.append(throughput)
 
-    return p_values, efficiencies
+    return pr_values, efficiencies
 
 # Tham số đầu vào
+# num_users = 10
+# A = 2
+# num_slots = 5000
+# num_timers = 20  # Chia giá trị p thành 20 bước
+
+# # Thu thập hiệu suất
+# p_values, efficiencies = collect_efficiency(num_users, A, num_slots, num_timers)
+
+# # In kết quả
+# print("p values:", p_values)
+# print("Efficiencies:", efficiencies)
+
+# Tham số mô phỏng
 num_users = 10
 A = 2
+pf = 0.1  # Xác suất gửi của người dùng tự do
 num_slots = 5000
-num_timers = 20  # Chia giá trị p thành 20 bước
+num_timers = 20
 
-# Thu thập hiệu suất
-p_values, efficiencies = collect_efficiency(num_users, A, num_slots, num_timers)
+# Thu thập hiệu suất với các giá trị pr
+pr_values, efficiencies = collect_efficiency(num_users, A, pf, num_slots, num_timers)
 
-# In kết quả
-print("p values:", p_values)
-print("Efficiencies:", efficiencies)
 # Vẽ đồ thị
 plt.figure(figsize=(8, 5))
-plt.plot(p_values, efficiencies, '-o', label='Throughput', color='blue')
+plt.plot(pr_values, efficiencies, '-o', label='Throughput', color='blue')
 plt.xlabel('Retransmission Probability (pr)')
 plt.ylabel('Throughput')
 plt.title('Throughput vs Retransmission Probability (pr)')
